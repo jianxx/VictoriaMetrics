@@ -214,7 +214,7 @@ We provide commercial support for both versions. [Contact us](mailto:info@victor
 
 The following commercial versions of VictoriaMetrics are available:
 
-* [VictoriaMetrics Cloud](https://cloud.victoriametrics.com/signUp?utm_source=website&utm_campaign=docs_vm_faq) – the most cost-efficient hosted monitoring platform, operated by VictoriaMetrics core team.
+* [VictoriaMetrics Cloud](https://console.victoriametrics.cloud/signUp?utm_source=website&utm_campaign=docs_vm_faq) – the most cost-efficient hosted monitoring platform, operated by VictoriaMetrics core team.
 
 The following commercial versions of VictoriaMetrics are planned:
 
@@ -280,7 +280,8 @@ Questions about VictoriaMetrics can be asked via the following channels:
 
 * [Slack Inviter](https://slack.victoriametrics.com/) and [Slack channel](https://victoriametrics.slack.com/)
 * [Telegram channel](https://t.me/VictoriaMetrics_en)
-* [Google group](https://groups.google.com/forum/#!forum/victorametrics-users)
+
+See the full list of [community channels](https://docs.victoriametrics.com/#community-and-contributions).
 
 ## Where can I file bugs and feature requests regarding VictoriaMetrics?
 

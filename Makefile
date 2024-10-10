@@ -13,6 +13,7 @@ PKG_TAG := $(BUILDINFO_TAG)
 endif
 
 GO_BUILDINFO = -X '$(PKG_PREFIX)/lib/buildinfo.Version=$(APP_NAME)-$(DATEINFO_TAG)-$(BUILDINFO_TAG)'
+TAR_OWNERSHIP ?= --owner=1000 --group=1000
 
 .PHONY: $(MAKECMDGOALS)
 
@@ -26,6 +27,7 @@ include package/release/Makefile
 all: \
 	victoria-metrics-prod \
 	victoria-logs-prod \
+	vlogscli-prod \
 	vmagent-prod \
 	vmalert-prod \
 	vmalert-tool-prod \
@@ -50,6 +52,7 @@ publish: \
 package: \
 	package-victoria-metrics \
 	package-victoria-logs \
+	package-vlogscli \
 	package-vmagent \
 	package-vmalert \
 	package-vmalert-tool \
@@ -245,7 +248,7 @@ release-victoria-metrics-windows-amd64:
 
 release-victoria-metrics-goos-goarch: victoria-metrics-$(GOOS)-$(GOARCH)-prod
 	cd bin && \
-		tar --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf victoria-metrics-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
+		tar $(TAR_OWNERSHIP) --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf victoria-metrics-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
 			victoria-metrics-$(GOOS)-$(GOARCH)-prod \
 		&& sha256sum victoria-metrics-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
 			victoria-metrics-$(GOOS)-$(GOARCH)-prod \
@@ -261,6 +264,14 @@ release-victoria-metrics-windows-goarch: victoria-metrics-windows-$(GOARCH)-prod
 			> victoria-metrics-windows-$(GOARCH)-$(PKG_TAG)_checksums.txt
 	cd bin && rm -rf \
 		victoria-metrics-windows-$(GOARCH)-prod.exe
+
+release-victoria-logs-bundle: \
+	release-victoria-logs \
+	release-vlogscli
+
+publish-victoria-logs-bundle: \
+	publish-victoria-logs \
+	publish-vlogscli
 
 release-victoria-logs:
 	$(MAKE_PARALLEL) release-victoria-logs-linux-386 \
@@ -302,7 +313,7 @@ release-victoria-logs-windows-amd64:
 
 release-victoria-logs-goos-goarch: victoria-logs-$(GOOS)-$(GOARCH)-prod
 	cd bin && \
-		tar --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf victoria-logs-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
+		tar $(TAR_OWNERSHIP) --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf victoria-logs-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
 			victoria-logs-$(GOOS)-$(GOARCH)-prod \
 		&& sha256sum victoria-logs-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
 			victoria-logs-$(GOOS)-$(GOARCH)-prod \
@@ -319,6 +330,63 @@ release-victoria-logs-windows-goarch: victoria-logs-windows-$(GOARCH)-prod
 	cd bin && rm -rf \
 		victoria-logs-windows-$(GOARCH)-prod.exe
 
+release-vlogscli:
+	$(MAKE_PARALLEL) release-vlogscli-linux-386 \
+		release-vlogscli-linux-amd64 \
+		release-vlogscli-linux-arm \
+		release-vlogscli-linux-arm64 \
+		release-vlogscli-darwin-amd64 \
+		release-vlogscli-darwin-arm64 \
+		release-vlogscli-freebsd-amd64 \
+		release-vlogscli-openbsd-amd64 \
+		release-vlogscli-windows-amd64
+
+release-vlogscli-linux-386:
+	GOOS=linux GOARCH=386 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-linux-amd64:
+	GOOS=linux GOARCH=amd64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-linux-arm:
+	GOOS=linux GOARCH=arm $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-linux-arm64:
+	GOOS=linux GOARCH=arm64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-darwin-amd64:
+	GOOS=darwin GOARCH=amd64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-darwin-arm64:
+	GOOS=darwin GOARCH=arm64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-freebsd-amd64:
+	GOOS=freebsd GOARCH=amd64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-openbsd-amd64:
+	GOOS=openbsd GOARCH=amd64 $(MAKE) release-vlogscli-goos-goarch
+
+release-vlogscli-windows-amd64:
+	GOARCH=amd64 $(MAKE) release-vlogscli-windows-goarch
+
+release-vlogscli-goos-goarch: vlogscli-$(GOOS)-$(GOARCH)-prod
+	cd bin && \
+		tar $(TAR_OWNERSHIP) --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf vlogscli-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
+			vlogscli-$(GOOS)-$(GOARCH)-prod \
+		&& sha256sum vlogscli-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
+			vlogscli-$(GOOS)-$(GOARCH)-prod \
+			| sed s/-$(GOOS)-$(GOARCH)-prod/-prod/ > vlogscli-$(GOOS)-$(GOARCH)-$(PKG_TAG)_checksums.txt
+	cd bin && rm -rf vlogscli-$(GOOS)-$(GOARCH)-prod
+
+release-vlogscli-windows-goarch: vlogscli-windows-$(GOARCH)-prod
+	cd bin && \
+		zip vlogscli-windows-$(GOARCH)-$(PKG_TAG).zip \
+			vlogscli-windows-$(GOARCH)-prod.exe \
+		&& sha256sum vlogscli-windows-$(GOARCH)-$(PKG_TAG).zip \
+			vlogscli-windows-$(GOARCH)-prod.exe \
+			> vlogscli-windows-$(GOARCH)-$(PKG_TAG)_checksums.txt
+	cd bin && rm -rf \
+		vlogscli-windows-$(GOARCH)-prod.exe
+
 release-vmutils: \
 	release-vmutils-linux-386 \
 	release-vmutils-linux-amd64 \
@@ -332,7 +400,7 @@ release-vmutils: \
 
 release-vmutils-linux-386:
 	GOOS=linux GOARCH=386 $(MAKE) release-vmutils-goos-goarch
-	
+
 release-vmutils-linux-amd64:
 	GOOS=linux GOARCH=amd64 $(MAKE) release-vmutils-goos-goarch
 
@@ -366,7 +434,7 @@ release-vmutils-goos-goarch: \
 	vmrestore-$(GOOS)-$(GOARCH)-prod \
 	vmctl-$(GOOS)-$(GOARCH)-prod
 	cd bin && \
-		tar --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf vmutils-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
+		tar $(TAR_OWNERSHIP) --transform="flags=r;s|-$(GOOS)-$(GOARCH)||" -czf vmutils-$(GOOS)-$(GOARCH)-$(PKG_TAG).tar.gz \
 			vmagent-$(GOOS)-$(GOARCH)-prod \
 			vmalert-$(GOOS)-$(GOARCH)-prod \
 			vmalert-tool-$(GOOS)-$(GOARCH)-prod \
@@ -443,19 +511,19 @@ check-all: fmt vet golangci-lint govulncheck
 clean-checkers: remove-golangci-lint remove-govulncheck
 
 test:
-	go test ./lib/... ./app/...
+	DISABLE_FSYNC_FOR_TESTING=1 go test ./lib/... ./app/...
 
 test-race:
-	go test -race ./lib/... ./app/...
+	DISABLE_FSYNC_FOR_TESTING=1 go test -race ./lib/... ./app/...
 
 test-pure:
-	CGO_ENABLED=0 go test ./lib/... ./app/...
+	DISABLE_FSYNC_FOR_TESTING=1 CGO_ENABLED=0 go test ./lib/... ./app/...
 
 test-full:
-	go test -coverprofile=coverage.txt -covermode=atomic ./lib/... ./app/...
+	DISABLE_FSYNC_FOR_TESTING=1 go test -coverprofile=coverage.txt -covermode=atomic ./lib/... ./app/...
 
 test-full-386:
-	GOARCH=386 go test -coverprofile=coverage.txt -covermode=atomic ./lib/... ./app/...
+	DISABLE_FSYNC_FOR_TESTING=1 GOARCH=386 go test -coverprofile=coverage.txt -covermode=atomic ./lib/... ./app/...
 
 benchmark:
 	go test -bench=. ./lib/...
@@ -466,9 +534,9 @@ benchmark-pure:
 	CGO_ENABLED=0 go test -bench=. ./app/...
 
 vendor-update:
-	go get -u -d ./lib/...
-	go get -u -d ./app/...
-	go mod tidy -compat=1.22
+	go get -u ./lib/...
+	go get -u ./app/...
+	go mod tidy -compat=1.23
 	go mod vendor
 
 app-local:
@@ -494,7 +562,7 @@ golangci-lint: install-golangci-lint
 	golangci-lint run
 
 install-golangci-lint:
-	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.59.1
+	which golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.60.3
 
 remove-golangci-lint:
 	rm -rf `which golangci-lint`

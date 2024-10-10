@@ -1052,7 +1052,7 @@ func fixBrokenBuckets(i int, xss []leTimeseries) {
 
 	// Substitute upper bucket values with lower bucket values if the upper values are NaN
 	// or are bigger than the lower bucket values.
-	vNext := xss[0].ts.Values[0]
+	vNext := xss[0].ts.Values[i]
 	for j := 1; j < len(xss); j++ {
 		v := xss[j].ts.Values[i]
 		if math.IsNaN(v) || vNext > v {
@@ -1544,10 +1544,8 @@ func transformRangeFirst(tfa *transformFuncArg) ([]*timeseries, error) {
 			continue
 		}
 		vFirst := values[0]
-		for i, v := range values {
-			if math.IsNaN(v) {
-				continue
-			}
+		values = ts.Values
+		for i := range values {
 			values[i] = vFirst
 		}
 	}
@@ -1571,10 +1569,8 @@ func setLastValues(tss []*timeseries) {
 			continue
 		}
 		vLast := values[len(values)-1]
-		for i, v := range values {
-			if math.IsNaN(v) {
-				continue
-			}
+		values = ts.Values
+		for i := range values {
 			values[i] = vLast
 		}
 	}

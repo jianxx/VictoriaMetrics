@@ -32,7 +32,7 @@ Future updates will introduce additional export methods, offering users more fle
             </td>
             <td>
 
-`writer.vm.VmWriter` or `vm` starting from [`v1.13.0`](../CHANGELOG.md#v1130)
+`writer.vm.VmWriter` or `vm` starting from [`v1.13.0`](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130)
             </td>
             <td>
 
@@ -60,11 +60,11 @@ Datasource URL address
             </td>
             <td>
 
-`0:0`
+`0:0`, `multitenant` (starting from [v1.16.2](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1162))
             </td>
             <td>
 
-For VictoriaMetrics Cluster version only, tenants are identified by accountID or accountID:projectID. See VictoriaMetrics Cluster [multitenancy docs](../../Cluster-VictoriaMetrics.md#multitenancy)
+For VictoriaMetrics Cluster version only, tenants are identified by `accountID` or `accountID:projectID`. Starting from [v1.16.2](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1162), `multitenant` [endpoint](https://docs.victoriametrics.com/cluster-victoriametrics/?highlight=writes#multitenancy-via-labels) is supported, to write data to multiple [tenants](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy). See VictoriaMetrics Cluster [multitenancy docs](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy)
             </td>
         </tr>
         <!-- Additional rows for metric_format -->
@@ -83,7 +83,7 @@ Metrics to save the output (in metric names or labels). Must have `__name__` key
                 <ul>
                     <li>
 
-`$VAR` -- Variables that model provides, all models provide the following set: {"anomaly_score", "y", "yhat", "yhat_lower", "yhat_upper"}. Description of standard output is [here](./models.md#vmanomaly-output). Depending on [model type](./models.md) it can provide more metrics, like "trend", "seasonality" etc.
+`$VAR` -- Variables that model provides, all models provide the following set: {"anomaly_score", "y", "yhat", "yhat_lower", "yhat_upper"}. Description of standard output is [here](https://docs.victoriametrics.com/anomaly-detection/components/models/#vmanomaly-output). Depending on [model type](https://docs.victoriametrics.com/anomaly-detection/components/models/) it can provide more metrics, like "trend", "seasonality" etc.
                     </li>
                     <li>
 
@@ -185,30 +185,59 @@ Timeout for the requests, passed as a string
         </tr>
         <tr>
             <td>
-
 `verify_tls`
             </td>
             <td>
-
 `false`
             </td>
             <td>
-
-Allows disabling TLS verification of the remote certificate.
+Verify TLS certificate. If `False`, it will not verify the TLS certificate. 
+If `True`, it will verify the certificate using the system's CA store. 
+If a path to a CA bundle file (like `ca.crt`), it will verify the certificate using the provided CA bundle.
             </td>
         </tr>
         <tr>
             <td>
-
+`tls_cert_file`
+            </td>
+            <td>
+`path/to/cert.crt`
+            </td>
+            <td>
+Path to a file with the client certificate, i.e. `client.crt`. Available since [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163).
+            </td>
+        </tr>
+        <tr>
+            <td>
+`tls_key_file`
+            </td>
+            <td>
+`path/to/key.crt`
+            </td>
+            <td>
+Path to a file with the client certificate key, i.e. `client.key`. Available since [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163).
+            </td>
+        </tr>
+        <tr>
+            <td>
 `bearer_token`
             </td>
             <td>
-
 `token`
             </td>
             <td>
-
-Token is passed in the standard format with the header: `Authorization: bearer {token}`
+Token is passed in the standard format with header: `Authorization: bearer {token}`
+            </td>
+        </tr>
+        <tr>
+            <td>
+`bearer_token_file`
+            </td>
+            <td>
+`path_to_file`
+            </td>
+            <td>
+Path to a file, which contains token, that is passed in the standard format with header: `Authorization: bearer {token}`. Available since [v1.15.9](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1159)
             </td>
         </tr>
     </tbody>
@@ -232,9 +261,48 @@ writer:
   password: "bar"
 ```
 
+### Multitenancy support
+
+> This feature applies to the VictoriaMetrics Cluster version only. Tenants are identified by either `accountID` or `accountID:projectID`. Starting with [v1.16.2](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1162), the `multitenant` [endpoint](https://docs.victoriametrics.com/cluster-victoriametrics/?highlight=writes#multitenancy-via-labels) is supported for writing data across multiple [tenants](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy). For more details, refer to the VictoriaMetrics Cluster [multitenancy documentation](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy).
+
+Please note the different behaviors depending on the `tenant_id` value:
+
+1. **When `writer.tenant_id != 'multitenant'` (e.g., `"0:0"`) and `reader.tenant_id != 'multitenant'` (can be different but valid, like `"0:1")**:
+   - The `vm_account_id` label is **not created** in the reader, **not persisted** to the writer, and is **not expected** in the output.
+   - **Result**: Data is written successfully with no logs or errors.
+
+2. **When `writer.tenant_id = 'multitenant'` and `vm_project_id` is present in the label set**:
+   - This typically happens when `reader.tenant_id` is also set to `multitenant`, meaning the `vm_account_id` label is stored in the results returned from the queries.
+   - **Result**: Everything functions as expected. Data is written successfully with no logs or errors.
+
+3. **When `writer.tenant_id = 'multitenant'` but `vm_account_id` is missing** (e.g., due to aggregation in the reader or missing `keep_metric_names` in the query):
+   - **Result**: The data is still written to `"0:0"`, but a warning is raised:
+    ```
+    The label `vm_account_id` was not found in the label set of {query_result.key}, 
+    but tenant_id='multitenant' is set in writer. The data will be written to the default tenant 0:0. 
+    Ensure that the query retains the necessary multi-tenant labels, 
+    or adjust the aggregation settings to preserve `vm_account_id` key in the label set.
+    ```
+
+4. **When `writer.tenant_id != 'multitenant'` (e.g., `"0:0"`) and `vm_account_id` exists in the label set**:
+   - **Result**: Writing is allowed, but a warning is raised:
+    ```
+    The label set for the metric {query_result.key} contains multi-tenancy labels, 
+    but the write endpoint is configured for single-tenant mode (tenant_id != 'multitenant'). 
+    Either adjust the query in the reader to avoid multi-tenancy labels 
+    or ensure that reserved key `vm_account_id` is not explicitly set for single-tenant environments.
+    ```
+
+### mTLS protection
+
+Starting from [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163), `vmanomaly` components such as [VmWriter](https://docs.victoriametrics.com/anomaly-detection/components/writer/#vm-writer) support [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) to ensure secure communication with [VictoriaMetrics Enterprise, configured with mTLS](https://docs.victoriametrics.com/#mtls-protection).
+
+For detailed guidance on configuring mTLS parameters such as `verify_tls`, `tls_cert_file`, and `tls_key_file`, please refer to the [mTLS protection section](https://docs.victoriametrics.com/anomaly-detection/components/reader/#mtls-protection) in the [Reader](https://docs.victoriametrics.com/anomaly-detection/components/reader/#vm-reader) documentation. The configuration principles apply consistently across all these `vmanomaly` components.
+
+
 ### Healthcheck metrics
 
-`VmWriter` exposes [several healthchecks metrics](./monitoring.md#writer-behaviour-metrics). 
+`VmWriter` exposes [several healthchecks metrics](https://docs.victoriametrics.com/anomaly-detection/components/monitoring/#writer-behaviour-metrics). 
 
 ### Metrics formatting
 
@@ -245,8 +313,8 @@ __name__: PREFIX1_$VAR
 for: PREFIX2_$QUERY_KEY
 ```
 
-* for `__name__` parameter it will name metrics returned by models as `PREFIX1_anomaly_score`, `PREFIX1_yhat_lower`, etc. Vmanomaly output metrics names described [here](./models.md#vmanomaly-output)
-* for `for` parameter will add labels `PREFIX2_query_name_1`, `PREFIX2_query_name_2`, etc. Query names are set as aliases in config `reader` section in [`queries`](./reader.md#config-parameters) parameter.
+* for `__name__` parameter it will name metrics returned by models as `PREFIX1_anomaly_score`, `PREFIX1_yhat_lower`, etc. Vmanomaly output metrics names described [here](https://docs.victoriametrics.com/anomaly-detection/components/models/#vmanomaly-output)
+* for `for` parameter will add labels `PREFIX2_query_name_1`, `PREFIX2_query_name_2`, etc. Query names are set as aliases in config `reader` section in [`queries`](https://docs.victoriametrics.com/anomaly-detection/components/reader/#config-parameters) parameter.
 
 It is possible to specify other custom label names needed.
 For example:
@@ -256,7 +324,7 @@ custom_label_1: label_name_1
 custom_label_2: label_name_2
 ```
 
-Apart from specified labels, output metrics will return **labels inherited from input metrics returned by [queries](./reader.md#config-parameters)**.
+Apart from specified labels, output metrics will return **labels inherited from input metrics returned by [queries](https://docs.victoriametrics.com/anomaly-detection/components/reader/#config-parameters)**.
 For example if input data contains labels such as `cpu=1, device=eth0, instance=node-exporter:9100` all these labels will be present in vmanomaly output metrics.
 
 So if metric_format section was set up like this:

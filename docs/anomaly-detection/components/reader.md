@@ -12,14 +12,14 @@ aliases:
 There are 4 sources available to read data into VM Anomaly Detection from: VictoriaMetrics, (ND)JSON file, QueryRange, or CSV file. Depending on the data source, different parameters should be specified in the config file in the `reader` section.
 -->
 
-VictoriaMetrics Anomaly Detection (`vmanomaly`) primarily uses [VmReader](#vm-reader) to ingest data. This reader focuses on fetching time-series data directly from VictoriaMetrics with the help of powerful [MetricsQL](../../MetricsQL.md) expressions for aggregating, filtering and grouping your data, ensuring seamless integration and efficient data handling.
+VictoriaMetrics Anomaly Detection (`vmanomaly`) primarily uses [VmReader](#vm-reader) to ingest data. This reader focuses on fetching time-series data directly from VictoriaMetrics with the help of powerful [MetricsQL](https://docs.victoriametrics.com/metricsql/) expressions for aggregating, filtering and grouping your data, ensuring seamless integration and efficient data handling.
 
 Future updates will introduce additional readers, expanding the range of data sources `vmanomaly` can work with.
 
 
 ## VM reader
 
-> **Note**: Starting from [v1.13.0](/anomaly-detection/changelog#v1130) there is backward-compatible change of [`queries`](/anomaly-detection/components/reader?highlight=queries#vm-reader) arg of [VmReader](#vm-reader). New format allows to specify per-query parameters, like `step` to reduce amount of data read from VictoriaMetrics TSDB and to allow config flexibility. Please see [per-query parameters](#per-query-parameters) section for the details.
+> **Note**: Starting from [v1.13.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130) there is backward-compatible change of [`queries`](https://docs.victoriametrics.com/anomaly-detection/components/reader?highlight=queries#vm-reader) arg of [VmReader](#vm-reader). New format allows to specify per-query parameters, like `step` to reduce amount of data read from VictoriaMetrics TSDB and to allow config flexibility. Please see [per-query parameters](#per-query-parameters) section for the details.
 
 Old format like
 
@@ -47,20 +47,21 @@ reader:
     vmb:
       expr: 'avg(vm_blocks)'  # initial MetricsQL expression
       step: '10s'  # individual step for this query, will be filled with `sampling_period` from the root level
+      data_range: ['-inf', 'inf']  # by default, no constraints applied on data range
       # new query-level arguments will be added in backward-compatible way in future releases
 ```
 
 ### Per-query parameters
 
-Starting from [v1.13.0](/anomaly-detection/changelog#v1130) there is change of [`queries`](/anomaly-detection/components/reader?highlight=queries#vm-reader) arg format. Now each query alias supports the next (sub)fields:
+Starting from [v1.13.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130) there is change of [`queries`](https://docs.victoriametrics.com/anomaly-detection/components/reader?highlight=queries#vm-reader) arg format. Now each query alias supports the next (sub)fields:
 
 - `expr` (string): MetricsQL/PromQL expression that defines an input for VmReader. As accepted by `/query_range?query=%s`. i.e. `avg(vm_blocks)`
 
-- `step` (string): query-level frequency of the points returned, i.e. `30s`. Will be converted to `/query_range?step=%s` param (in seconds). Useful to optimize total amount of data read from VictoriaMetrics, where different queries may have **different frequencies for different [machine learning models](/anomaly-detection/components/models)** to run on.
+- `step` (string): query-level frequency of the points returned, i.e. `30s`. Will be converted to `/query_range?step=%s` param (in seconds). Useful to optimize total amount of data read from VictoriaMetrics, where different queries may have **different frequencies for different [machine learning models](https://docs.victoriametrics.com/anomaly-detection/components/models)** to run on.
 
-    > **Note**: if not set explicitly (or if older config style prior to [v1.13.0](/anomaly-detection/changelog#v1130)) is used, then it is set to reader-level `sampling_period` arg.
+    > **Note**: if not set explicitly (or if older config style prior to [v1.13.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130)) is used, then it is set to reader-level `sampling_period` arg.
 
-    > **Note**: having **different** individual `step` args for queries (i.e. `30s` for `q1` and `2m` for `q2`) is not yet supported for [multivariate model](/anomaly-detection/components/models/index.html#multivariate-models) if you want to run it on several queries simultaneously (i.e. setting [`queries`](/anomaly-detection/components/models/#queries) arg of a model to [`q1`, `q2`]).
+    > **Note**: having **different** individual `step` args for queries (i.e. `30s` for `q1` and `2m` for `q2`) is not yet supported for [multivariate model](https://docs.victoriametrics.com/anomaly-detection/components/models/#multivariate-models) if you want to run it on several queries simultaneously (i.e. setting [`queries`](https://docs.victoriametrics.com/anomaly-detection/components/models/#queries) arg of a model to [`q1`, `q2`]).
 
 - `data_range` (list[float | string]): Introduced in [v1.15.1](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1151), it allows defining **valid** data ranges for input per individual query in `queries`, resulting in:
   - **High anomaly scores** (>1) when the *data falls outside the expected range*, indicating a data constraint violation.
@@ -97,7 +98,7 @@ reader:
 `class`
             </td>
             <td>
-`reader.vm.VmReader` (or `vm` starting from [v1.13.0](../CHANGELOG.md#v1130))
+`reader.vm.VmReader` (or `vm` starting from [v1.13.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130))
             </td>
             <td>
 Name of the class needed to enable reading from VictoriaMetrics or Prometheus. VmReader is the default option, if not specified.
@@ -130,10 +131,10 @@ Datasource URL address
 `tenant_id`
             </td>
             <td>
-`0:0`
+`0:0`, `multitenant`
             </td>
             <td>
-For VictoriaMetrics Cluster version only, tenants are identified by accountID or accountID:projectID. See VictoriaMetrics Cluster [multitenancy docs](../../Cluster-VictoriaMetrics.md#multitenancy)
+For VictoriaMetrics Cluster version only, tenants are identified by `accountID` or `accountID:projectID`. Starting from [v1.16.2](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1162), `multitenant` [endpoint](https://docs.victoriametrics.com/cluster-victoriametrics/?highlight=reads#multitenancy-via-labels) is supported, to execute queries over multiple [tenants](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy). See VictoriaMetrics Cluster [multitenancy docs](https://docs.victoriametrics.com/cluster-victoriametrics/#multitenancy)
             </td>
         </tr>
         <tr>
@@ -144,7 +145,7 @@ For VictoriaMetrics Cluster version only, tenants are identified by accountID or
 `1h`
             </td>
             <td>
-Frequency of the points returned. Will be converted to `/query_range?step=%s` param (in seconds). **Required** since [v1.9.0](../CHANGELOG.md#v190).
+Frequency of the points returned. Will be converted to `/query_range?step=%s` param (in seconds). **Required** since [v1.9.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v190).
             </td>
         </tr>
         <tr>
@@ -210,7 +211,31 @@ Timeout for the requests, passed as a string
 `false`
             </td>
             <td>
-Allows disabling TLS verification of the remote certificate.
+Verify TLS certificate. If `False`, it will not verify the TLS certificate. 
+If `True`, it will verify the certificate using the system's CA store. 
+If a path to a CA bundle file (like `ca.crt`), it will verify the certificate using the provided CA bundle.
+            </td>
+        </tr>
+        <tr>
+            <td>
+`tls_cert_file`
+            </td>
+            <td>
+`path/to/cert.crt`
+            </td>
+            <td>
+Path to a file with the client certificate, i.e. `client.crt`. Available since [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163).
+            </td>
+        </tr>
+        <tr>
+            <td>
+`tls_key_file`
+            </td>
+            <td>
+`path/to/key.crt`
+            </td>
+            <td>
+Path to a file with the client certificate key, i.e. `client.key`. Available since [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163).
             </td>
         </tr>
         <tr>
@@ -226,13 +251,24 @@ Token is passed in the standard format with header: `Authorization: bearer {toke
         </tr>
         <tr>
             <td>
+`bearer_token_file`
+            </td>
+            <td>
+`path_to_file`
+            </td>
+            <td>
+Path to a file, which contains token, that is passed in the standard format with header: `Authorization: bearer {token}`. Available since [v1.15.9](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1159)
+            </td>
+        </tr>
+        <tr>
+            <td>
 `extra_filters`
             </td>
             <td>
 `[]`
             </td>
             <td>
-List of strings with series selector. See: [Prometheus querying API enhancements](../../README.md##prometheus-querying-api-enhancements)
+List of strings with series selector. See: [Prometheus querying API enhancements](https://docs.victoriametrics.com/##prometheus-querying-api-enhancements)
             </td>
         </tr>
         <tr>
@@ -277,6 +313,50 @@ reader:
   latency_offset: '1ms'
 ```
 
+<!-- ### mTLS protection
+
+Starting from [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163), `vmanomaly` supports [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) requests in its components, like [VmReader](https://docs.victoriametrics.com/anomaly-detection/components/reader/#vm-reader), [VmWriter](https://docs.victoriametrics.com/anomaly-detection/components/writer/#vm-writer), and [Monitoring/Push](https://docs.victoriametrics.com/anomaly-detection/components/monitoring/#push-config-parameters) to query from and write to [VictoriaMetrics Enterprise, configured in the same mode](https://docs.victoriametrics.com/#mtls-protection).
+
+Please see the description of next arguments in a [config](#config-parameters):
+- `verify_tls` (if string, acts similar to `-mtlsCAFile` command line arg of VictoriaMetrics).
+- `tls_cert_file` (if given, acts similar to `-tlsCertFile` command line arg of VictoriaMetrics).
+- `tls_key_file` (if given, acts similar to `-tlsKeyFile` command line arg of VictoriaMetrics). -->
+
+
+### mTLS protection
+
+As of [v1.16.3](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1163), `vmanomaly` supports [mutual TLS (mTLS)](https://en.wikipedia.org/wiki/Mutual_authentication) for secure communication across its components, including [VmReader](https://docs.victoriametrics.com/anomaly-detection/components/reader/#vm-reader), [VmWriter](https://docs.victoriametrics.com/anomaly-detection/components/writer/#vm-writer), and [Monitoring/Push](https://docs.victoriametrics.com/anomaly-detection/components/monitoring/#push-config-parameters). This allows for mutual authentication between the client and server when querying or writing data to [VictoriaMetrics Enterprise, configured for mTLS](https://docs.victoriametrics.com/#mtls-protection).
+
+mTLS ensures that both the client and server verify each other's identity using certificates, which enhances security by preventing unauthorized access. 
+
+To configure mTLS, the following parameters can be set in the [config](#config-parameters):
+- `verify_tls`: If set to a string, it functions like the `-mtlsCAFile` command-line argument of VictoriaMetrics, specifying the CA bundle to use. Set to `True` to use the system's default certificate store.
+- `tls_cert_file`: Specifies the path to the client certificate, analogous to the `-tlsCertFile` argument of VictoriaMetrics.
+- `tls_key_file`: Specifies the path to the client certificate key, similar to the `-tlsKeyFile` argument of VictoriaMetrics.
+
+These options allow you to securely interact with mTLS-enabled VictoriaMetrics endpoints.
+
+Example configuration to enable mTLS with custom certificates:
+
+```yaml
+reader:
+  class: "vm"
+  datasource_url: "https://your-victoriametrics-instance-with-mtls"
+  # tenant_id: "0:0" uncomment and set for cluster version
+  queries:
+    vm_blocks_example:
+      expr: 'avg(rate(vm_blocks[5m]))'
+      step: 30s
+  sampling_period: 30s
+  verify_tls: "path/to/ca.crt"  # path to CA bundle for TLS verification
+  tls_cert_file: "path/to/client.crt"  # path to the client certificate
+  tls_key_file:  "path/to/client.key"  # path to the client certificate key
+  # additional reader parameters ...
+
+# other config sections, like models, schedulers, writer, ...
+```
+
+
 ### Healthcheck metrics
 
-`VmReader` exposes [several healthchecks metrics](./monitoring.md#reader-behaviour-metrics).
+`VmReader` exposes [several healthchecks metrics](https://docs.victoriametrics.com/anomaly-detection/components/monitoring/#reader-behaviour-metrics).

@@ -9,8 +9,8 @@ menu:
 aliases:
 - /anomaly-detection/QuickStart.html
 ---
-For service introduction visit [README](./README.md) page
-and [Overview](./Overview.md) of how `vmanomaly` works.
+For service introduction visit [README](https://docs.victoriametrics.com/anomaly-detection/) page
+and [Overview](https://docs.victoriametrics.com/anomaly-detection/overview/) of how `vmanomaly` works.
 
 ## How to install and run vmanomaly
 
@@ -21,7 +21,9 @@ The following options are available:
 - [To run Docker image](#docker)
 - [To run in Kubernetes with Helm charts](#kubernetes-with-helm-charts)
 
-> **Note**: Starting from [v1.13.0](./CHANGELOG.md#v1130) there is a mode to keep anomaly detection models on host filesystem after `fit` stage (instead of keeping them in-memory by default); This may lead to **noticeable reduction of RAM used** on bigger setups. See instructions [here](./FAQ.md#resource-consumption-of-vmanomaly).
+> **Note**: Starting from [v1.13.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1130) there is a mode to keep anomaly detection models on host filesystem after `fit` stage (instead of keeping them in-memory by default); This may lead to **noticeable reduction of RAM used** on bigger setups. See instructions [here](https://docs.victoriametrics.com/anomaly-detection/faq/#on-disk-mode).
+
+> **Note**: Starting from [v1.16.0](https://docs.victoriametrics.com/anomaly-detection/changelog/#v1160), a similar optimization is available for data read from VictoriaMetrics TSDB. See instructions [here](https://docs.victoriametrics.com/anomaly-detection/faq/#on-disk-mode).
 
 ### Docker
 
@@ -32,13 +34,13 @@ Below are the steps to get `vmanomaly` up and running inside a Docker container:
 1. Pull Docker image:
 
 ```sh
-docker pull victoriametrics/vmanomaly:latest
+docker pull victoriametrics/vmanomaly:v1.16.3
 ```
 
 2. (Optional step) tag the `vmanomaly` Docker image:
 
 ```sh
-docker image tag victoriametrics/vmanomaly:latest vmanomaly
+docker image tag victoriametrics/vmanomaly:v1.16.3 vmanomaly
 ```
 
 3. Start the `vmanomaly` Docker container with a *license file*, use the command below.
@@ -50,7 +52,7 @@ export YOUR_CONFIG_FILE_PATH=path/to/config/file
 docker run -it -v $YOUR_LICENSE_FILE_PATH:/license \
                -v $YOUR_CONFIG_FILE_PATH:/config.yml \
                vmanomaly /config.yml \
-               --license-file=/license
+               --licenseFile=/license
 ```
 
 In case you found `PermissionError: [Errno 13] Permission denied:` in `vmanomaly` logs, set user/user group to 1000 in the run command above / in a docker-compose file:
@@ -62,7 +64,7 @@ docker run -it --user 1000:1000 \
                -v $YOUR_LICENSE_FILE_PATH:/license \
                -v $YOUR_CONFIG_FILE_PATH:/config.yml \
                vmanomaly /config.yml \
-               --license-file=/license
+               --licenseFile=/license
 ```
 
 ```yaml
@@ -70,23 +72,23 @@ docker run -it --user 1000:1000 \
 services:
   # ...
   vmanomaly:
-    image: victoriametrics/vmanomaly:latest
+    image: victoriametrics/vmanomaly:v1.16.3
     volumes:
         $YOUR_LICENSE_FILE_PATH:/license
         $YOUR_CONFIG_FILE_PATH:/config.yml
     command:
       - "/config.yml"
-      - "--license-file=/license"
+      - "--licenseFile=/license"
     # ...
 ```
 
-For a complete docker-compose example please refer to [our alerting guide](./guides/guide-vmanomaly-vmalert/README.md), chapter [docker-compose](./guides/guide-vmanomaly-vmalert/README.md#docker-compose)
+For a complete docker-compose example please refer to [our alerting guide](https://docs.victoriametrics.com/anomaly-detection/guides/guide-vmanomaly-vmalert/), chapter [docker-compose](https://docs.victoriametrics.com/anomaly-detection/guides/guide-vmanomaly-vmalert/#docker-compose)
 
 
 
 See also:
 
-- Verify the license online OR offline. See the details [here](./Overview.md#licensing).
+- Verify the license online OR offline. See the details [here](https://docs.victoriametrics.com/anomaly-detection/overview/#licensing).
 - [How to configure `vmanomaly`](#how-to-configure-vmanomaly)
 
 ### Kubernetes with Helm charts
@@ -134,19 +136,19 @@ writer:
 
 
 Next steps:
-- Define how often to run and make inferences in the [scheduler](./components/scheduler.md) section of a config file.
-- Setup the datasource to read data from in the [reader](./components/reader.md) section.
-- Specify where and how to store anomaly detection metrics in the [writer](./components/writer.md) section.
-- Configure built-in models parameters according to your needs in the [models](./components/models.md) section.
-- Integrate your [custom models](./components/models.md#custom-model-guide) with `vmanomaly`.
-- Define queries for input data using [MetricsQL](../../MetricsQL.md).
+- Define how often to run and make inferences in the [scheduler](https://docs.victoriametrics.com/anomaly-detection/components/scheduler/) section of a config file.
+- Setup the datasource to read data from in the [reader](https://docs.victoriametrics.com/anomaly-detection/components/reader/) section.
+- Specify where and how to store anomaly detection metrics in the [writer](https://docs.victoriametrics.com/anomaly-detection/components/writer/) section.
+- Configure built-in models parameters according to your needs in the [models](https://docs.victoriametrics.com/anomaly-detection/components/models/) section.
+- Integrate your [custom models](https://docs.victoriametrics.com/anomaly-detection/components/models/#custom-model-guide) with `vmanomaly`.
+- Define queries for input data using [MetricsQL](https://docs.victoriametrics.com/metricsql/).
 
 
 ## Check also
 
 Here are other materials that you might find useful:
 
-- [Guide: Anomaly Detection and Alerting Setup](./guides/guide-vmanomaly-vmalert/README.md)
-- [FAQ](./FAQ.md)
-- [Changelog](./CHANGELOG.md)
+- [Guide: Anomaly Detection and Alerting Setup](https://docs.victoriametrics.com/anomaly-detection/guides/guide-vmanomaly-vmalert/)
+- [FAQ](https://docs.victoriametrics.com/anomaly-detection/faq/)
+- [Changelog](https://docs.victoriametrics.com/anomaly-detection/changelog/)
 - [Anomaly Detection Blog](https://victoriametrics.com/blog/tags/anomaly-detection/)

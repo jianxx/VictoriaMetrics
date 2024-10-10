@@ -15,7 +15,7 @@ import (
 var (
 	addr = flag.String("remoteWrite.url", "", "Optional URL to VictoriaMetrics or vminsert where to persist alerts state "+
 		"and recording rules results in form of timeseries. "+
-		"Supports address in the form of IP address with a port (e.g., 127.0.0.1:8428) or DNS SRV record. "+
+		"Supports address in the form of IP address with a port (e.g., http://127.0.0.1:8428) or DNS SRV record. "+
 		"For example, if -remoteWrite.url=http://127.0.0.1:8428 is specified, "+
 		"then the alerts state will be written to http://127.0.0.1:8428/api/v1/write . See also -remoteWrite.disablePathAppend, '-remoteWrite.showURL'.")
 	showRemoteWriteURL = flag.Bool("remoteWrite.showURL", false, "Whether to show -remoteWrite.url in the exported metrics. "+
@@ -34,9 +34,9 @@ var (
 
 	idleConnectionTimeout = flag.Duration("remoteWrite.idleConnTimeout", 50*time.Second, `Defines a duration for idle (keep-alive connections) to exist. Consider settings this value less to the value of "-http.idleConnTimeout". It must prevent possible "write: broken pipe" and "read: connection reset by peer" errors.`)
 
-	maxQueueSize  = flag.Int("remoteWrite.maxQueueSize", 1e5, "Defines the max number of pending datapoints to remote write endpoint")
-	maxBatchSize  = flag.Int("remoteWrite.maxBatchSize", 1e3, "Defines max number of timeseries to be flushed at once")
-	concurrency   = flag.Int("remoteWrite.concurrency", 1, "Defines number of writers for concurrent writing into remote write endpoint")
+	maxQueueSize  = flag.Int("remoteWrite.maxQueueSize", 1e6, "Defines the max number of pending datapoints to remote write endpoint")
+	maxBatchSize  = flag.Int("remoteWrite.maxBatchSize", 1e4, "Defines max number of timeseries to be flushed at once")
+	concurrency   = flag.Int("remoteWrite.concurrency", 4, "Defines number of writers for concurrent writing into remote write endpoint")
 	flushInterval = flag.Duration("remoteWrite.flushInterval", 5*time.Second, "Defines interval of flushes to remote write endpoint")
 
 	tlsInsecureSkipVerify = flag.Bool("remoteWrite.tlsInsecureSkipVerify", false, "Whether to skip tls verification when connecting to -remoteWrite.url")
@@ -72,7 +72,7 @@ func Init(ctx context.Context) (*Client, error) {
 
 	t, err := httputils.Transport(*addr, *tlsCertFile, *tlsKeyFile, *tlsCAFile, *tlsServerName, *tlsInsecureSkipVerify)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create transport: %w", err)
+		return nil, fmt.Errorf("failed to create transport for -remoteWrite.url=%q: %w", *addr, err)
 	}
 	t.IdleConnTimeout = *idleConnectionTimeout
 	t.DialContext = netutil.NewStatDialFunc("vmalert_remotewrite")

@@ -1,5 +1,4 @@
 ---
-sort: 6
 weight: 6
 title: Monitoring
 menu:
@@ -7,20 +6,18 @@ menu:
     parent: "operator"
     weight: 6
 aliases:
-  - /operator/monitoring.html
+  - /operator/monitoring
+  - /operator/monitoring/index.html
 ---
-
-# Monitoring of VictoriaMetrics Operator
-
 VictoriaMetrics operator exports internal metrics in Prometheus exposition format at `/metrics` page.
 
-These metrics can be scraped via [vmagent](./resources/vmagent.md) or Prometheus.
+These metrics can be scraped via [vmagent](https://docs.victoriametrics.com/operator/resources/vmagent) or Prometheus.
 
 ## Dashboard
 
 Official Grafana dashboard available for [vmoperator](https://grafana.com/grafana/dashboards/17869-victoriametrics-operator/).
 
-<img src="monitoring_operator-dashboard.png" width=1200>
+![operator dashboard monitoring](monitoring_operator-dashboard.webp)
 
 Graphs on the dashboards contain useful hints - hover the `i` icon in the top left corner of each graph to read it.
 
@@ -32,13 +29,13 @@ Alerting rules for VictoriaMetrics operator are available [here](https://github.
 
 ### Helm-chart victoria-metrics-k8s-stack
 
-In [victoria-metrics-k8s-stack](https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-metrics-k8s-stack/README.md) helm-chart operator self-scrapes metrics by default.
+In [victoria-metrics-k8s-stack](https://docs.victoriametrics.com/helm/victoriametrics-k8s-stack/) helm-chart operator self-scrapes metrics by default.
 
 This helm-chart also includes [official grafana dashboard for operator](#dashboard) and [official alerting rules for operator](#alerting-rules).
 
 ### Helm-chart victoria-metrics-operator
 
-With [victoria-metrics-operator](https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-metrics-operator/README.md) you can use following parameter in `values.yaml`:
+With [victoria-metrics-operator](https://docs.victoriametrics.com/helm/victoriametrics-operator) you can use following parameter in `values.yaml`:
 
 ```yaml
 # values.yaml
@@ -50,7 +47,7 @@ serviceMonitor:
 
 This parameter makes helm-chart to create a scrape-object for installed operator instance.
 
-You will also need to deploy a (vmsingle)[./resources/vmsingle.md] where the metrics will be collected.
+You will also need to deploy a (vmsingle)[https://docs.victoriametrics.com/operator/resources/vmsingle] where the metrics will be collected.
 
 ### Pure operator installation
 
@@ -74,7 +71,7 @@ spec:
       - monitoring
 ```
 
-See more info about object [VMServiceScrape](./resources/vmservicescrape.md).
+See more info about object [VMServiceScrape](https://docs.victoriametrics.com/operator/resources/vmservicescrape).
 
-You will also need a [vmsingle](https://docs.victoriametrics.com/operator/resources/vmsingle.html) where the metrics will be collected.
+You will also need a [vmsingle](https://docs.victoriametrics.com/operator/resources/vmsingle) where the metrics will be collected.
 
